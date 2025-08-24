@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:provider/provider.dart';
-import '../providers/theme_provider.dart';
 import 'article_screen.dart';
 import 'settings_screen.dart';
 import 'notification_screen.dart';
@@ -20,6 +18,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
   final PageController _pageController = PageController();
+  final TextEditingController _searchController = TextEditingController();
 
   String _getPageTitle() {
     switch (_selectedIndex) {
@@ -39,11 +38,40 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       appBar: AppBar(
         elevation: 2,
-        title: CustomText(
-          text: _getPageTitle(),
-          fontSize: 20.sp,
-          fontWeight: FontWeight.w600,
-        ),
+        title: _selectedIndex == 0
+            ? Container(
+                height: 40.h,
+                decoration: BoxDecoration(
+                  color: Colors.grey[200],
+                  borderRadius: BorderRadius.circular(20.r),
+                ),
+                child: TextField(
+                  controller: _searchController,
+                  decoration: InputDecoration(
+                    hintText: 'Search articles...',
+                    hintStyle: TextStyle(
+                      fontSize: 14.sp,
+                      color: Colors.grey[600],
+                    ),
+                    prefixIcon: Icon(
+                      Icons.search,
+                      size: 20.sp,
+                      color: Colors.grey[600],
+                    ),
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 16.w,
+                      vertical: 10.h,
+                    ),
+                  ),
+                  style: TextStyle(fontSize: 14.sp),
+                ),
+              )
+            : CustomText(
+                text: _getPageTitle(),
+                fontSize: 20.sp,
+                fontWeight: FontWeight.w600,
+              ),
         actions: [
           IconButton(
             icon: Icon(Icons.settings, size: 24.sp),
@@ -58,10 +86,10 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       body: PageView(
         controller: _pageController,
-        children: const <Widget>[
-          ArticleScreen(),
-          NotificationScreen(),
-          ProfileScreen(),
+        children: <Widget>[
+          ArticleScreen(searchController: _searchController),
+          const NotificationScreen(),
+          const ProfileScreen(),
         ],
         onPageChanged: (page) {
           setState(() {
@@ -91,5 +119,11 @@ class _HomeScreenState extends State<HomeScreen> {
       _selectedIndex = value;
     });
     _pageController.jumpToPage(value);
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 }
