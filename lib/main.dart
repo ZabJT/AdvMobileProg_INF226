@@ -6,23 +6,26 @@ import 'package:provider/provider.dart';
 import 'providers/theme_provider.dart';
 import 'screens/home_screen.dart';
 import 'screens/settings_screen.dart';
-import 'screens/article_detail_screen.dart';
 import 'screens/notification_screen.dart';
 import 'screens/profile_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]).then((
-    _,
-  ) async {
-    try {
-      await dotenv.load(fileName: 'assets/.env');
-    } catch (e) {
-      // If .env file is missing, continue with default values
-      debugPrint('Could not load .env file: $e');
-    }
-    runApp(const MainApp());
-  });
+
+  // Load environment variables first
+  try {
+    await dotenv.load(fileName: '.env');
+    debugPrint('Environment variables loaded successfully');
+  } catch (e) {
+    // If .env file is missing, continue with default values
+    debugPrint('Could not load .env file: $e');
+    debugPrint('Continuing with default values...');
+  }
+
+  // Set preferred orientations
+  await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+
+  runApp(const MainApp());
 }
 
 class MainApp extends StatelessWidget {
@@ -46,11 +49,9 @@ class MainApp extends StatelessWidget {
                 primary: Colors.blue,
                 secondary: Colors.blueAccent,
                 surface: Colors.white,
-                background: Colors.white,
                 onPrimary: Colors.white,
                 onSecondary: Colors.white,
                 onSurface: Colors.black87,
-                onBackground: Colors.black87,
               ),
             ),
             darkTheme: ThemeData.dark().copyWith(
@@ -59,11 +60,9 @@ class MainApp extends StatelessWidget {
                 primary: Colors.blue,
                 secondary: Colors.blueAccent,
                 surface: Colors.grey[900]!,
-                background: Colors.black,
                 onPrimary: Colors.white,
                 onSecondary: Colors.white,
                 onSurface: Colors.white,
-                onBackground: Colors.white,
               ),
             ),
             themeMode: themeModel.isDark ? ThemeMode.dark : ThemeMode.light,

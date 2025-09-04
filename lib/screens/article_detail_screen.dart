@@ -7,11 +7,13 @@ import '../widgets/article_dialog.dart';
 class ArticleDetailScreen extends StatefulWidget {
   final Article article;
   final Function(Article)? onArticleUpdated;
+  final List<Article> existingArticles; // For duplicate name validation
 
   const ArticleDetailScreen({
     super.key,
     required this.article,
     this.onArticleUpdated,
+    required this.existingArticles,
   });
 
   @override
@@ -35,6 +37,7 @@ class _ArticleDetailScreenState extends State<ArticleDetailScreen> {
       barrierDismissible: !isLoading,
       builder: (ctx) => ArticleDialog(
         article: currentArticle,
+        existingArticles: widget.existingArticles,
         onArticleSaved: (updatedArticle) {
           setState(() {
             currentArticle = updatedArticle;

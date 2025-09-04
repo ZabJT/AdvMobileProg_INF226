@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import '../models/article_model.dart';
 import '../services/article_service.dart';
@@ -25,7 +26,7 @@ class _ArticleScreenState extends State<ArticleScreen>
   bool _isLoading = true;
   bool _isRefreshing = false;
   int _currentPage = 1;
-  int _itemsPerPage = 6;
+  late int _itemsPerPage;
   int _totalPages = 0;
 
   // Fade animation for Add button
@@ -33,11 +34,23 @@ class _ArticleScreenState extends State<ArticleScreen>
   late Animation<double> _fadeAnimation;
   bool _isAtBottom = false;
   Timer? _fadeTimer;
-  ScrollController _scrollController = ScrollController();
+  late ScrollController _scrollController;
 
   @override
   void initState() {
     super.initState();
+
+    // Initialize pagination settings from environment variables
+    try {
+      _itemsPerPage = int.tryParse(dotenv.env['ITEMS_PER_PAGE'] ?? '6') ?? 6;
+    } catch (e) {
+      print('Error accessing ITEMS_PER_PAGE from env: $e');
+      _itemsPerPage = 6; // fallback to default
+    }
+
+    // Initialize scroll controller
+    _scrollController = ScrollController();
+
     _loadArticles();
     // Listen to search controller changes
     widget.searchController?.addListener(_filterArticles);
@@ -85,6 +98,8 @@ class _ArticleScreenState extends State<ArticleScreen>
     try {
       final response = await ArticleService().getAllArticles();
       _allArticles = (response).map((e) => Article.fromJson(e)).toList();
+      // Reverse the list to show newest articles first (chronological order: newest to oldest)
+      _allArticles = _allArticles.reversed.toList();
       _filteredArticles = _allArticles;
       _updatePagination();
     } catch (e) {
@@ -166,11 +181,17 @@ class _ArticleScreenState extends State<ArticleScreen>
       context: context,
       barrierDismissible: true,
       builder: (ctx) => ArticleDialog(
+        existingArticles: _allArticles,
         onArticleSaved: (newArticle) {
           setState(() {
-            _allArticles.insert(0, newArticle);
-            _currentPage = 1; // Reset to first page when new article is added
+            _allArticles.insert(
+              0,
+              newArticle,
+            ); // Add to beginning for newest-first order
             _filterArticles();
+            // New article will be on the first page
+            _currentPage = 1;
+            _updatePagination();
           });
         },
       ),
@@ -328,6 +349,7 @@ class _ArticleScreenState extends State<ArticleScreen>
                   MaterialPageRoute(
                     builder: (context) => ArticleDetailScreen(
                       article: article,
+                      existingArticles: _allArticles,
                       onArticleUpdated: (updatedArticle) {
                         setState(() {
                           final index = _allArticles.indexWhere(
@@ -400,20 +422,33 @@ class _ArticleScreenState extends State<ArticleScreen>
   Widget _buildPaginationControls() {
     if (_totalPages <= 1) return SizedBox.shrink();
 
-    // Calculate the sliding window of 5 pages
+    // Get max pagination pages from environment variables
+    int maxPaginationPages;
+    try {
+      maxPaginationPages =
+          int.tryParse(dotenv.env['MAX_PAGINATION_PAGES'] ?? '5') ?? 5;
+    } catch (e) {
+      print('Error accessing MAX_PAGINATION_PAGES from env: $e');
+      maxPaginationPages = 5; // fallback to default
+    }
+
+    // Calculate the sliding window of pages
     int startPage = _currentPage;
-    int endPage = _currentPage + 4;
+    int endPage = _currentPage + (maxPaginationPages - 1);
 
     // Adjust if we're near the end
     if (endPage > _totalPages) {
       endPage = _totalPages;
-      startPage = (_totalPages - 4).clamp(1, _totalPages);
+      startPage = (_totalPages - (maxPaginationPages - 1)).clamp(
+        1,
+        _totalPages,
+      );
     }
 
     // Adjust if we're near the beginning
     if (startPage < 1) {
       startPage = 1;
-      endPage = 5.clamp(1, _totalPages);
+      endPage = maxPaginationPages.clamp(1, _totalPages);
     }
 
     return Container(

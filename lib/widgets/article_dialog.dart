@@ -6,8 +6,14 @@ import '../services/article_service.dart';
 class ArticleDialog extends StatefulWidget {
   final Article? article; // null for create, Article for edit
   final Function(Article) onArticleSaved;
+  final List<Article> existingArticles; // For duplicate name validation
 
-  const ArticleDialog({super.key, this.article, required this.onArticleSaved});
+  const ArticleDialog({
+    super.key,
+    this.article,
+    required this.onArticleSaved,
+    required this.existingArticles,
+  });
 
   @override
   State<ArticleDialog> createState() => _ArticleDialogState();
@@ -39,6 +45,29 @@ class _ArticleDialogState extends State<ArticleDialog> {
     authorController.dispose();
     contentController.dispose();
     super.dispose();
+  }
+
+  // Validate if article name already exists
+  String? _validateArticleName(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return 'Article name is required';
+    }
+
+    // Check for duplicates (case-insensitive)
+    final trimmedValue = value.trim().toLowerCase();
+    final isDuplicate = widget.existingArticles.any((article) {
+      // Skip the current article when editing
+      if (widget.article != null && article.aid == widget.article!.aid) {
+        return false;
+      }
+      return article.name.toLowerCase() == trimmedValue;
+    });
+
+    if (isDuplicate) {
+      return 'An article with this name already exists';
+    }
+
+    return null;
   }
 
   List<String> _toList(String raw) {
@@ -134,8 +163,7 @@ class _ArticleDialogState extends State<ArticleDialog> {
                   labelText: 'Author / Name',
                   border: OutlineInputBorder(),
                 ),
-                validator: (v) =>
-                    (v == null || v.trim().isEmpty) ? 'Required' : null,
+                validator: _validateArticleName,
               ),
               SizedBox(height: 12.h),
               TextFormField(
