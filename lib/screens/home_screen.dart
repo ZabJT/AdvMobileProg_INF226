@@ -19,6 +19,7 @@ class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
   final PageController _pageController = PageController();
   final TextEditingController _searchController = TextEditingController();
+  VoidCallback? _resetArticlePage;
 
   String _getPageTitle() {
     switch (_selectedIndex) {
@@ -87,7 +88,12 @@ class _HomeScreenState extends State<HomeScreen> {
       body: PageView(
         controller: _pageController,
         children: <Widget>[
-          ArticleScreen(searchController: _searchController),
+          ArticleScreen(
+            searchController: _searchController,
+            onResetPage: (VoidCallback resetCallback) {
+              _resetArticlePage = resetCallback;
+            },
+          ),
           const NotificationScreen(),
           const ProfileScreen(),
         ],
@@ -119,6 +125,11 @@ class _HomeScreenState extends State<HomeScreen> {
       _selectedIndex = value;
     });
     _pageController.jumpToPage(value);
+
+    // If tapping home button (index 0), reset article screen to first page
+    if (value == 0) {
+      _resetArticlePage?.call();
+    }
   }
 
   @override
