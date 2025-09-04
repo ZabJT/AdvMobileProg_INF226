@@ -5,7 +5,12 @@ import 'package:http/http.dart' as http;
 class ArticleService {
   static String get host {
     try {
-      return dotenv.env['API_BASE_URL'] ?? 'https://advweb-backend.vercel.app';
+      if (dotenv.isInitialized) {
+        return dotenv.env['API_BASE_URL'] ??
+            'https://advweb-backend.vercel.app';
+      } else {
+        return 'https://advweb-backend.vercel.app'; // fallback if not initialized
+      }
     } catch (e) {
       print('Error accessing API_BASE_URL from env: $e');
       return 'https://advweb-backend.vercel.app';
@@ -14,7 +19,11 @@ class ArticleService {
 
   static int get timeout {
     try {
-      return int.tryParse(dotenv.env['API_TIMEOUT'] ?? '30000') ?? 30000;
+      if (dotenv.isInitialized) {
+        return int.tryParse(dotenv.env['API_TIMEOUT'] ?? '30000') ?? 30000;
+      } else {
+        return 30000; // fallback if not initialized
+      }
     } catch (e) {
       print('Error accessing API_TIMEOUT from env: $e');
       return 30000;

@@ -42,7 +42,11 @@ class _ArticleScreenState extends State<ArticleScreen>
 
     // Initialize pagination settings from environment variables
     try {
-      _itemsPerPage = int.tryParse(dotenv.env['ITEMS_PER_PAGE'] ?? '6') ?? 6;
+      if (dotenv.isInitialized) {
+        _itemsPerPage = int.tryParse(dotenv.env['ITEMS_PER_PAGE'] ?? '6') ?? 6;
+      } else {
+        _itemsPerPage = 6; // fallback to default if not initialized
+      }
     } catch (e) {
       print('Error accessing ITEMS_PER_PAGE from env: $e');
       _itemsPerPage = 6; // fallback to default
@@ -425,8 +429,12 @@ class _ArticleScreenState extends State<ArticleScreen>
     // Get max pagination pages from environment variables
     int maxPaginationPages;
     try {
-      maxPaginationPages =
-          int.tryParse(dotenv.env['MAX_PAGINATION_PAGES'] ?? '5') ?? 5;
+      if (dotenv.isInitialized) {
+        maxPaginationPages =
+            int.tryParse(dotenv.env['MAX_PAGINATION_PAGES'] ?? '5') ?? 5;
+      } else {
+        maxPaginationPages = 5; // fallback to default if not initialized
+      }
     } catch (e) {
       print('Error accessing MAX_PAGINATION_PAGES from env: $e');
       maxPaginationPages = 5; // fallback to default
